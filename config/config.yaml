@@ -1,0 +1,101 @@
+# ============================================================
+# 基于LLM的本地知识库系统 - 配置文件
+# ============================================================
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  debug: false
+  cors_origins:
+    - "http://localhost:5173"
+    - "http://localhost:3000"
+    - "http://127.0.0.1:5173"
+
+# LLM 配置
+llm:
+  # 提供者: openai | ollama
+  provider: "openai"
+
+  openai:
+    api_key: ""            # 或通过环境变量 OPENAI_API_KEY 设置
+    api_base: ""           # 可选，自定义API地址（兼容OpenAI接口的服务）
+    model: "gpt-4o"
+    temperature: 0.7
+    max_tokens: 2000
+    top_p: 0.9
+
+  ollama:
+    base_url: "http://localhost:11434"
+    model: "qwen2.5:7b"
+    temperature: 0.7
+    max_tokens: 2000
+
+# 向量嵌入配置
+embedding:
+  # 提供者: openai | ollama | huggingface
+  provider: "openai"
+
+  openai:
+    api_key: ""            # 或通过环境变量 OPENAI_API_KEY 设置
+    api_base: ""
+    model: "text-embedding-3-small"
+
+  ollama:
+    base_url: "http://localhost:11434"
+    model: "nomic-embed-text"
+
+  huggingface:
+    model: "BAAI/bge-small-zh-v1.5"
+    device: "cpu"          # cpu | cuda
+
+# 向量数据库配置
+vector_store:
+  # 类型: faiss | chromadb
+  type: "faiss"
+  persist_directory: "./data/vector_store"
+  collection_name: "knowledge_base"
+
+# 文档处理配置
+document:
+  upload_directory: "./data/uploads"
+  allowed_extensions:
+    - ".pdf"
+    - ".docx"
+    - ".doc"
+    - ".txt"
+    - ".md"
+    - ".csv"
+    - ".html"
+  max_file_size_mb: 50
+  chunk_size: 500
+  chunk_overlap: 50
+  separators:
+    - "\n\n"
+    - "\n"
+    - "。"
+    - "！"
+    - "？"
+    - "."
+    - "!"
+    - "?"
+    - " "
+
+# RAG 检索配置
+retrieval:
+  top_k: 5
+  score_threshold: 0.5
+  search_type: "similarity"   # similarity | mmr
+  # MMR 参数 (当 search_type 为 mmr 时生效)
+  mmr_fetch_k: 20
+  mmr_lambda: 0.5
+
+# 数据库配置
+database:
+  url: "sqlite:///./data/knowledge_base.db"
+
+# 日志配置
+logging:
+  level: "INFO"            # DEBUG | INFO | WARNING | ERROR
+  file: "./logs/app.log"
+  max_size_mb: 10
+  backup_count: 5

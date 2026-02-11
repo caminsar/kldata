@@ -1,0 +1,41 @@
+# Web Framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# LLM & Embeddings
+openai==1.58.1
+langchain==0.3.14
+langchain-openai==0.3.0
+langchain-community==0.3.14
+langchain-huggingface==0.1.2
+
+# Vector Store
+faiss-cpu==1.9.0.post1
+chromadb==0.5.23
+
+# Document Parsing
+pypdf==5.1.0
+python-docx==1.1.2
+openpyxl==3.1.5
+beautifulsoup4==4.12.3
+chardet==5.2.0
+python-magic==0.4.27
+
+# Database
+sqlalchemy==2.0.36
+aiosqlite==0.20.0
+
+# Configuration
+pyyaml==6.0.2
+pydantic==2.10.4
+pydantic-settings==2.7.1
+
+# Utilities
+tiktoken==0.8.0
+numpy==1.26.4
+httpx==0.28.1
+aiofiles==24.1.0
+
+# HuggingFace (optional, for local embeddings)
+sentence-transformers==3.3.1

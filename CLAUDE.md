@@ -2,54 +2,109 @@
 
 ## Project Overview
 
-**kldata** is a data repository for Key Lab. It is currently in an early stage with minimal structure.
+**kldata** — 基于 LLM 的本地知识库问答系统，采用 RAG 架构。后端 Python/FastAPI，前端 Vue 3/Element Plus。
 
 ## Repository Structure
 
 ```
 kldata/
-├── CLAUDE.md       # AI assistant guidance (this file)
-└── README.md       # Project description
+├── backend/                # Python 后端
+│   ├── app/
+│   │   ├── api/            # FastAPI 路由 (chat, documents, knowledge_base, system)
+│   │   ├── models/         # SQLAlchemy ORM + Pydantic schemas
+│   │   ├── services/       # 业务逻辑 (chat, document, embedding, llm, vector_store)
+│   │   ├── utils/          # 文件解析、文本分块
+│   │   ├── config.py       # 配置管理（读取 config/config.yaml）
+│   │   └── main.py         # FastAPI 入口
+│   └── requirements.txt
+├── frontend/               # Vue 3 前端
+│   ├── src/
+│   │   ├── views/          # ChatView, KnowledgeBaseView, DocumentsView, SettingsView
+│   │   ├── api/index.js    # Axios API 封装
+│   │   ├── stores/         # Pinia 状态
+│   │   └── router/         # Vue Router
+│   ├── package.json
+│   └── vite.config.js      # Vite + API 代理到 :8000
+├── config/config.yaml      # 主配置文件
+├── docker/                 # Dockerfile, docker-compose, nginx.conf
+├── scripts/                # start.sh, stop.sh, backup.sh, restore.sh, health_check.sh
+├── data/                   # 运行时数据（不入库）
+├── docs/                   # architecture.md, development.md, deployment.md, api.md
+└── .env.example            # 环境变量模板
 ```
-
-## Current State
-
-- The repository contains no application code, build tooling, tests, or CI/CD configuration.
-- There is no `.gitignore` file configured.
-- The sole branch with content history is `master`.
 
 ## Development Workflows
 
-### Git
+### Install & Run (Dev Mode)
 
-- **Remote**: `origin` (GitHub via `caminsar/kldata`)
-- **Primary branch**: `master`
-- No branch protection rules, CI checks, or automated pipelines are configured.
+```bash
+# 后端
+cd backend && python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-### Build / Test / Lint
+# 前端
+cd frontend && npm install && npm run dev
+```
 
-No build system, test framework, or linter is set up. When tooling is added in the future, update this section with:
-- How to install dependencies
-- How to build the project
-- How to run tests (`test`, `test:unit`, `test:integration`, etc.)
-- How to lint and format code
+Or use the one-liner: `./scripts/start.sh dev`
+
+### Build Frontend
+
+```bash
+cd frontend && npm run build
+```
+
+### Docker
+
+```bash
+./scripts/start.sh docker    # 启动
+./scripts/stop.sh docker     # 停止
+```
+
+### Maintenance
+
+```bash
+./scripts/backup.sh                       # 备份数据
+./scripts/restore.sh data/backups/xxx.tar.gz  # 恢复数据
+./scripts/health_check.sh                 # 健康检查
+python3 scripts/init_db.py                # 初始化数据库
+```
+
+## Key Configuration
+
+Config file: `config/config.yaml`
+
+| Section | Key fields |
+|---------|------------|
+| `llm` | `provider` (openai/ollama), model, temperature, max_tokens |
+| `embedding` | `provider` (openai/ollama/huggingface), model |
+| `document` | chunk_size (500), chunk_overlap (50), allowed_extensions |
+| `retrieval` | top_k (5), score_threshold (0.5), search_type (similarity/mmr) |
+| `database` | SQLite URL |
+
+Environment variables: `OPENAI_API_KEY`, `OPENAI_API_BASE`
+
+## Architecture (RAG Pipeline)
+
+```
+Upload → Parse file → Chunk text → Embed → Store in FAISS
+Query  → Embed query → Search FAISS → Build context → LLM generate → Response
+```
 
 ## Conventions
 
-### Commit Messages
-
-Follow standard conventions: use imperative mood, keep the subject line under 72 characters, and provide context in the body when needed.
-
-### Adding Code or Data
-
-When adding new content to this repository:
-1. Add a `.gitignore` appropriate for the language/framework being used.
-2. Set up linting and formatting from the start.
-3. Update this `CLAUDE.md` file to reflect the new structure and workflows.
+- **Backend**: Python 3.11+, type hints, Chinese docstrings
+- **Frontend**: Vue 3 Composition API (`<script setup>`), Element Plus components
+- **Config**: All tunables in `config/config.yaml`, not hardcoded
+- **API paths**: `/api/knowledge-bases`, `/api/documents`, `/api/chat`, `/api/system`
+- **Commit messages**: imperative mood, under 72 chars
 
 ## Notes for AI Assistants
 
-- This is a data-oriented repository; do not assume it follows typical application patterns.
-- Always read existing files before proposing changes.
-- Keep changes minimal and focused.
-- Update this file whenever significant structural changes are made to the repository.
+- Read `config/config.yaml` to understand tunable parameters before changing defaults
+- Backend services use singleton pattern for LLM/embedding instances; call `reset_*()` after config changes
+- Vector data is stored per knowledge base in `data/vector_store/kb_{id}/`
+- The frontend proxies `/api` to `localhost:8000` in dev mode (see `vite.config.js`)
+- SQLite DB path is relative to project root: `data/knowledge_base.db`
+- File parsing is synchronous; for production consider async task queues
